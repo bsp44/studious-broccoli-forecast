@@ -1,0 +1,10 @@
+.git
+__pycache__
+*.pyc
+.env
+*.md
+deploy/
+examples/
+graphs/
+*.yaml
+!requirements-forecast.txt

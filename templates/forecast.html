@@ -1,0 +1,584 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Marketing Channel Performance Forecaster</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+            color: #333;
+        }
+
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 40px;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+            font-weight: 700;
+        }
+
+        .header p {
+            font-size: 1.1em;
+            opacity: 0.9;
+        }
+
+        .content {
+            padding: 40px;
+        }
+
+        .input-section {
+            background: #f8f9fa;
+            padding: 30px;
+            border-radius: 15px;
+            margin-bottom: 30px;
+        }
+
+        .input-group {
+            margin-bottom: 25px;
+        }
+
+        .input-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #495057;
+            font-size: 0.95em;
+        }
+
+        .input-group input {
+            width: 100%;
+            padding: 12px 16px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 1em;
+            transition: all 0.3s ease;
+        }
+
+        .input-group input:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        .input-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+
+        .button {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 15px 40px;
+            font-size: 1.1em;
+            font-weight: 600;
+            border-radius: 8px;
+            cursor: pointer;
+            width: 100%;
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+
+        .button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px rgba(102, 126, 234, 0.3);
+        }
+
+        .button:active {
+            transform: translateY(0);
+        }
+
+        .results-section {
+            display: none;
+            margin-top: 30px;
+        }
+
+        .results-section.show {
+            display: block;
+            animation: fadeIn 0.5s ease;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .results-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .metric-card {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 12px;
+            text-align: center;
+            border-left: 4px solid #667eea;
+        }
+
+        .metric-card.current {
+            border-left-color: #28a745;
+        }
+
+        .metric-card.forecast {
+            border-left-color: #667eea;
+        }
+
+        .metric-card.change {
+            border-left-color: #ffc107;
+        }
+
+        .metric-label {
+            font-size: 0.85em;
+            color: #6c757d;
+            margin-bottom: 8px;
+            font-weight: 500;
+        }
+
+        .metric-value {
+            font-size: 1.8em;
+            font-weight: 700;
+            color: #212529;
+        }
+
+        .metric-change {
+            font-size: 0.9em;
+            margin-top: 5px;
+            font-weight: 600;
+        }
+
+        .metric-change.positive {
+            color: #28a745;
+        }
+
+        .metric-change.negative {
+            color: #dc3545;
+        }
+
+        .revenue-section {
+            background: #f0f7f0;
+            border-left: 4px solid #28a745;
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+        }
+
+        .revenue-section h3 {
+            color: #1e7e34;
+            margin-bottom: 15px;
+            font-size: 1.2em;
+        }
+
+        .revenue-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: 15px;
+        }
+
+        .revenue-item {
+            text-align: center;
+        }
+
+        .revenue-item .label {
+            font-size: 0.85em;
+            color: #6c757d;
+            margin-bottom: 4px;
+        }
+
+        .revenue-item .value {
+            font-size: 1.5em;
+            font-weight: 700;
+            color: #212529;
+        }
+
+        .efficiency-note {
+            background: #e7f3ff;
+            border-left: 4px solid #2196F3;
+            padding: 15px;
+            border-radius: 8px;
+            margin-top: 20px;
+            font-size: 0.9em;
+            color: #0d47a1;
+        }
+
+        .comparison-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+            background: white;
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+        }
+
+        .comparison-table th {
+            background: #667eea;
+            color: white;
+            padding: 15px;
+            text-align: left;
+            font-weight: 600;
+        }
+
+        .comparison-table td {
+            padding: 15px;
+            border-bottom: 1px solid #e0e0e0;
+        }
+
+        .comparison-table tr:last-child td {
+            border-bottom: none;
+        }
+
+        .comparison-table tr:hover {
+            background: #f8f9fa;
+        }
+
+        .error-message {
+            background: #f8d7da;
+            color: #721c24;
+            padding: 15px;
+            border-radius: 8px;
+            margin-top: 20px;
+            border-left: 4px solid #dc3545;
+            display: none;
+        }
+
+        .error-message.show {
+            display: block;
+        }
+
+        @media (max-width: 768px) {
+            .input-row {
+                grid-template-columns: 1fr;
+            }
+
+            .results-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .header h1 {
+                font-size: 2em;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>📊 Marketing Channel Forecaster</h1>
+            <p>Forecast lead volume changes based on spend adjustments</p>
+        </div>
+
+        <div class="content">
+            <div class="input-section">
+                <h2 style="margin-bottom: 20px; color: #495057;">Current Performance</h2>
+                
+                <div class="input-row">
+                    <div class="input-group">
+                        <label for="current_spend">Daily Spend ($)</label>
+                        <input type="number" id="current_spend" placeholder="e.g., 12500" step="0.01" min="0.01">
+                    </div>
+                    
+                    <div class="input-group">
+                        <label for="current_leads">Daily Leads</label>
+                        <input type="number" id="current_leads" placeholder="e.g., 1928" step="0.01" min="0.01">
+                    </div>
+                </div>
+
+                <div class="input-row">
+                    <div class="input-group">
+                        <label for="spend_change">Spend Change (%)</label>
+                        <input type="number" id="spend_change" placeholder="e.g., 10 for 10% increase, -5 for 5% decrease" step="0.1">
+                    </div>
+                    <div class="input-group">
+                        <label for="revenue_per_lead">Revenue per lead ($)</label>
+                        <input type="number" id="revenue_per_lead" placeholder="e.g., 56" step="0.01" min="0" value="56">
+                    </div>
+                </div>
+
+                <div class="input-group">
+                    <label for="elasticity">Elasticity (optional)</label>
+                    <input type="number" id="elasticity" placeholder="0.82 default — lower = more diminishing returns" step="0.01" min="0.5" max="1" value="0.82" title="Lead response to spend. 0.82 = typical paid search; 0.75 = more decay; 0.9 = closer to linear.">
+                </div>
+
+                <button class="button" onclick="calculateForecast()">Calculate Forecast</button>
+                
+                <div class="error-message" id="errorMessage"></div>
+            </div>
+
+            <div class="results-section" id="resultsSection">
+                <h2 style="margin-bottom: 20px; color: #495057;">Forecast Results</h2>
+                
+                <div class="results-grid" id="resultsGrid"></div>
+
+                <div class="revenue-section" id="revenueSection">
+                    <h3>Revenue</h3>
+                    <div class="revenue-grid" id="revenueGrid"></div>
+                </div>
+
+                <div class="efficiency-note" id="efficiencyNote"></div>
+
+                <table class="comparison-table">
+                    <thead>
+                        <tr>
+                            <th>Metric</th>
+                            <th>Current</th>
+                            <th>Forecasted</th>
+                            <th>Change</th>
+                        </tr>
+                    </thead>
+                    <tbody id="comparisonTableBody"></tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function formatCurrency(value) {
+            return new Intl.NumberFormat('en-US', {
+                style: 'currency',
+                currency: 'USD',
+                minimumFractionDigits: 2,
+                maximumFractionDigits: 2
+            }).format(value);
+        }
+
+        function formatCurrencyNoDecimals(value) {
+            return new Intl.NumberFormat('en-US', {
+                style: 'currency',
+                currency: 'USD',
+                minimumFractionDigits: 0,
+                maximumFractionDigits: 0
+            }).format(Math.round(value));
+        }
+
+        function formatNumber(value, decimals = 0) {
+            return new Intl.NumberFormat('en-US', {
+                minimumFractionDigits: decimals,
+                maximumFractionDigits: decimals
+            }).format(value);
+        }
+
+        function formatPercent(value) {
+            const sign = value >= 0 ? '+' : '';
+            return `${sign}${value.toFixed(2)}%`;
+        }
+
+        function calculateForecast() {
+            const currentSpend = parseFloat(document.getElementById('current_spend').value);
+            const currentLeads = parseFloat(document.getElementById('current_leads').value);
+            const spendChange = parseFloat(document.getElementById('spend_change').value);
+
+            const errorMessage = document.getElementById('errorMessage');
+            errorMessage.classList.remove('show');
+            errorMessage.textContent = '';
+
+            const revenuePerLead = parseFloat(document.getElementById('revenue_per_lead').value) || 0;
+
+            // Validation
+            if (!currentSpend || currentSpend <= 0) {
+                showError('Please enter a valid daily spend greater than 0');
+                return;
+            }
+
+            if (!currentLeads || currentLeads <= 0) {
+                showError('Please enter a valid daily leads greater than 0');
+                return;
+            }
+
+            if (isNaN(spendChange)) {
+                showError('Please enter a spend change percentage');
+                return;
+            }
+
+            if (revenuePerLead < 0) {
+                showError('Revenue per lead cannot be negative');
+                return;
+            }
+
+            // Make API call
+            fetch('/api/forecast', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    current_spend: currentSpend,
+                    current_leads: currentLeads,
+                    spend_change_percent: spendChange,
+                    elasticity: parseFloat(document.getElementById('elasticity').value) || 0.82
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.error) {
+                    showError(data.error);
+                    return;
+                }
+                displayResults(data);
+            })
+            .catch(error => {
+                showError('An error occurred while calculating the forecast. Please try again.');
+                console.error('Error:', error);
+            });
+        }
+
+        function showError(message) {
+            const errorMessage = document.getElementById('errorMessage');
+            errorMessage.textContent = message;
+            errorMessage.classList.add('show');
+        }
+
+        function displayResults(data) {
+            const resultsSection = document.getElementById('resultsSection');
+            const resultsGrid = document.getElementById('resultsGrid');
+            const comparisonTableBody = document.getElementById('comparisonTableBody');
+            const efficiencyNote = document.getElementById('efficiencyNote');
+            const revenueGrid = document.getElementById('revenueGrid');
+
+            const revenuePerLead = parseFloat(document.getElementById('revenue_per_lead').value) || 0;
+            const currentRevenue = data.current_leads * revenuePerLead;
+            const forecastedRevenue = data.new_leads * revenuePerLead;
+            const revenueChange = forecastedRevenue - currentRevenue;
+            const revenueChangePercent = currentRevenue ? (revenueChange / currentRevenue) * 100 : 0;
+
+            // Show results section
+            resultsSection.classList.add('show');
+
+            // Create metric cards
+            resultsGrid.innerHTML = `
+                <div class="metric-card current">
+                    <div class="metric-label">Current Daily Spend</div>
+                    <div class="metric-value">${formatCurrency(data.current_spend)}</div>
+                </div>
+                <div class="metric-card forecast">
+                    <div class="metric-label">Forecasted Daily Spend</div>
+                    <div class="metric-value">${formatCurrency(data.new_spend)}</div>
+                    <div class="metric-change ${data.spend_change_percent >= 0 ? 'positive' : 'negative'}">
+                        ${formatPercent(data.spend_change_percent)}
+                    </div>
+                </div>
+                <div class="metric-card current">
+                    <div class="metric-label">Current Daily Leads</div>
+                    <div class="metric-value">${formatNumber(data.current_leads, 0)}</div>
+                </div>
+                <div class="metric-card forecast">
+                    <div class="metric-label">Forecasted Daily Leads</div>
+                    <div class="metric-value">${formatNumber(data.new_leads, 0)}</div>
+                    <div class="metric-change ${data.lead_change_percent >= 0 ? 'positive' : 'negative'}">
+                        ${formatPercent(data.lead_change_percent)}
+                    </div>
+                </div>
+                <div class="metric-card change">
+                    <div class="metric-label">Efficiency Factor</div>
+                    <div class="metric-value">${data.efficiency_factor}%</div>
+                    <div class="metric-change" style="color: #6c757d; font-size: 0.8em;">
+                        ${formatPercent(data.spend_change_percent)} spend → ${formatPercent(data.lead_change_percent)} leads
+                    </div>
+                </div>
+            `;
+
+            // Revenue section (daily leads × revenue per lead)
+            revenueGrid.innerHTML = `
+                <div class="revenue-item">
+                    <div class="label">Current daily revenue</div>
+                    <div class="value">${formatCurrencyNoDecimals(currentRevenue)}</div>
+                </div>
+                <div class="revenue-item">
+                    <div class="label">Forecasted daily revenue</div>
+                    <div class="value">${formatCurrencyNoDecimals(forecastedRevenue)}</div>
+                </div>
+                <div class="revenue-item">
+                    <div class="label">Change</div>
+                    <div class="value metric-change ${revenueChange >= 0 ? 'positive' : 'negative'}">
+                        ${formatCurrencyNoDecimals(revenueChange)} (${formatPercent(revenueChangePercent)})
+                    </div>
+                </div>
+            `;
+
+            // Create comparison table
+            comparisonTableBody.innerHTML = `
+                <tr>
+                    <td><strong>Daily Spend</strong></td>
+                    <td>${formatCurrency(data.current_spend)}</td>
+                    <td>${formatCurrency(data.new_spend)}</td>
+                    <td class="metric-change ${data.spend_change_percent >= 0 ? 'positive' : 'negative'}">
+                        ${formatPercent(data.spend_change_percent)} (${formatCurrency(data.spend_change_absolute)})
+                    </td>
+                </tr>
+                <tr>
+                    <td><strong>Daily Leads</strong></td>
+                    <td>${formatNumber(data.current_leads, 0)}</td>
+                    <td>${formatNumber(data.new_leads, 0)}</td>
+                    <td class="metric-change ${data.lead_change_percent >= 0 ? 'positive' : 'negative'}">
+                        ${formatPercent(data.lead_change_percent)} (${formatNumber(data.leads_change_absolute, 0)})
+                    </td>
+                </tr>
+                <tr>
+                    <td><strong>Cost Per Lead (CPL)</strong></td>
+                    <td>${formatCurrency(data.current_cpl)}</td>
+                    <td>${formatCurrency(data.new_cpl)}</td>
+                    <td class="metric-change ${data.cpl_change_percent <= 0 ? 'positive' : 'negative'}">
+                        ${formatPercent(data.cpl_change_percent)}
+                    </td>
+                </tr>
+                <tr>
+                    <td><strong>Daily Revenue</strong></td>
+                    <td>${formatCurrencyNoDecimals(currentRevenue)}</td>
+                    <td>${formatCurrencyNoDecimals(forecastedRevenue)}</td>
+                    <td class="metric-change ${revenueChange >= 0 ? 'positive' : 'negative'}">
+                        ${formatCurrencyNoDecimals(revenueChange)} (${formatPercent(revenueChangePercent)})
+                    </td>
+                </tr>
+            `;
+
+            // Efficiency note
+            efficiencyNote.innerHTML = `
+                <strong>💡 Power-law model (elasticity ${data.elasticity != null ? data.elasticity : '0.82'}):</strong> 
+                Leads scale with spend<sup>elasticity</sup>, so a ${formatPercent(data.spend_change_percent)} spend change 
+                gives ${formatPercent(data.lead_change_percent)} lead change (${data.efficiency_factor}% efficiency). 
+                The curve is smooth—no step changes. Adjust <em>Elasticity</em> above to tune (lower = more diminishing returns).
+            `;
+        }
+
+        // Allow Enter key to trigger calculation
+        document.addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                calculateForecast();
+            }
+        });
+    </script>
+</body>
+</html>
+
