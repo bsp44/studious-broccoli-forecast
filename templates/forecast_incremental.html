@@ -1,0 +1,582 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Incremental Budget Impact | Marketing Forecaster</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+            color: #333;
+        }
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            overflow: hidden;
+        }
+        .nav-link {
+            display: inline-block;
+            margin-bottom: 15px;
+            color: rgba(255,255,255,0.9);
+            text-decoration: none;
+            font-size: 0.95em;
+        }
+        .nav-link:hover { text-decoration: underline; }
+        .header {
+            background: linear-gradient(135deg, #2d6a4f 0%, #1b4332 100%);
+            color: white;
+            padding: 40px;
+            text-align: center;
+        }
+        .header h1 { font-size: 2.5em; margin-bottom: 10px; font-weight: 700; }
+        .header p { font-size: 1.1em; opacity: 0.9; }
+        .content { padding: 40px; }
+        .input-section {
+            background: #f8f9fa;
+            padding: 30px;
+            border-radius: 15px;
+            margin-bottom: 30px;
+        }
+        .input-group { margin-bottom: 25px; }
+        .input-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #495057;
+            font-size: 0.95em;
+        }
+        .input-group input {
+            width: 100%;
+            padding: 12px 16px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 1em;
+            transition: all 0.3s ease;
+        }
+        .input-group input:focus {
+            outline: none;
+            border-color: #2d6a4f;
+            box-shadow: 0 0 0 3px rgba(45, 106, 79, 0.15);
+        }
+        .input-group select {
+            width: 100%;
+            padding: 12px 16px;
+            padding-right: 36px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 1em;
+            font-family: inherit;
+            color: #212529;
+            background-color: #fff;
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%236c757d' d='M6 8L1 3h10z'/%3E%3C/svg%3E");
+            background-repeat: no-repeat;
+            background-position: right 12px center;
+            appearance: none;
+            -webkit-appearance: none;
+            -moz-appearance: none;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-sizing: border-box;
+        }
+        .input-group select:focus {
+            outline: none;
+            border-color: #2d6a4f;
+            box-shadow: 0 0 0 3px rgba(45, 106, 79, 0.15);
+        }
+        .input-row { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+        .button {
+            background: linear-gradient(135deg, #2d6a4f 0%, #1b4332 100%);
+            color: white;
+            border: none;
+            padding: 15px 40px;
+            font-size: 1.1em;
+            font-weight: 600;
+            border-radius: 8px;
+            cursor: pointer;
+            width: 100%;
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+        .button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px rgba(45, 106, 79, 0.3);
+        }
+        .results-section { display: none; margin-top: 30px; }
+        .results-section.show { display: block; animation: fadeIn 0.5s ease; }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .results-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+        .metric-card {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 12px;
+            text-align: center;
+            border-left: 4px solid #2d6a4f;
+        }
+        .metric-card.current { border-left-color: #28a745; }
+        .metric-card.forecast { border-left-color: #2d6a4f; }
+        .metric-card.change { border-left-color: #ffc107; }
+        .metric-label { font-size: 0.85em; color: #6c757d; margin-bottom: 8px; font-weight: 500; }
+        .metric-value { font-size: 1.8em; font-weight: 700; color: #212529; }
+        .metric-change { font-size: 0.9em; margin-top: 5px; font-weight: 600; }
+        .metric-change.positive { color: #28a745; }
+        .metric-change.negative { color: #dc3545; }
+        .revenue-section {
+            background: #f0f7f0;
+            border-left: 4px solid #28a745;
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+        }
+        .revenue-section h3 { color: #1e7e34; margin-bottom: 15px; font-size: 1.2em; }
+        .revenue-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 15px; }
+        .revenue-item { text-align: center; }
+        .revenue-item .label { font-size: 0.85em; color: #6c757d; margin-bottom: 4px; }
+        .revenue-item .value { font-size: 1.5em; font-weight: 700; color: #212529; }
+        .efficiency-note {
+            background: #e7f3ff;
+            border-left: 4px solid #2196F3;
+            padding: 15px;
+            border-radius: 8px;
+            margin-top: 20px;
+            font-size: 0.9em;
+            color: #0d47a1;
+        }
+        .comparison-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+            background: white;
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+        }
+        .comparison-table th {
+            background: #2d6a4f;
+            color: white;
+            padding: 15px;
+            text-align: left;
+            font-weight: 600;
+        }
+        .comparison-table td { padding: 15px; border-bottom: 1px solid #e0e0e0; }
+        .comparison-table tr:last-child td { border-bottom: none; }
+        .comparison-table tr:hover { background: #f8f9fa; }
+        .error-message {
+            background: #f8d7da;
+            color: #721c24;
+            padding: 15px;
+            border-radius: 8px;
+            margin-top: 20px;
+            border-left: 4px solid #dc3545;
+            display: none;
+        }
+        .error-message.show { display: block; }
+        @media (max-width: 768px) {
+            .input-row { grid-template-columns: 1fr; }
+            .results-grid { grid-template-columns: 1fr; }
+            .header h1 { font-size: 2em; }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <a href="/" class="nav-link">← Back to spend % forecaster</a>
+            <h1>💰 Incremental Budget Impact</h1>
+            <p>Add extra funds and see the incremental impact on leads, CPA, revenue & conversion</p>
+        </div>
+
+        <div class="content">
+            <div class="input-section">
+                <h2 style="margin-bottom: 20px; color: #495057;">Current performance</h2>
+                <div class="input-row">
+                    <div class="input-group">
+                        <label for="current_budget">Current daily budget ($)</label>
+                        <input type="number" id="current_budget" placeholder="e.g., 12500" step="0.01" min="0.01">
+                    </div>
+                    <div class="input-group">
+                        <label for="current_cpa">Current CPA ($)</label>
+                        <input type="number" id="current_cpa" placeholder="e.g., 6.49" step="0.01" min="0.01" title="Cost per acquisition (or cost per lead)">
+                    </div>
+                </div>
+                <div class="input-row">
+                    <div class="input-group">
+                        <label for="additional_funds">Additional funds to spend (total) ($)</label>
+                        <input type="number" id="additional_funds" placeholder="e.g., 40000" step="0.01" min="0">
+                    </div>
+                    <div class="input-group">
+                        <label for="period_duration">Over what period?</label>
+                        <select id="period_duration" onchange="toggleCustomDays()">
+                            <option value="1">1 day (same day)</option>
+                            <option value="7">7 days</option>
+                            <option value="14">14 days</option>
+                            <option value="rest_of_month">Rest of current month</option>
+                            <option value="30">30 days</option>
+                            <option value="custom">Custom…</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="input-row" id="custom_days_row" style="display: none;">
+                    <div class="input-group">
+                        <label for="custom_days">Number of days</label>
+                        <input type="number" id="custom_days" placeholder="e.g., 15" min="1" step="1" value="15">
+                    </div>
+                    <div class="input-group"></div>
+                </div>
+                <div class="input-row">
+                    <div class="input-group">
+                        <label for="revenue_per_lead">Revenue per lead ($)</label>
+                        <input type="number" id="revenue_per_lead" placeholder="e.g., 56" step="0.01" min="0" value="56">
+                    </div>
+                    <div class="input-group"></div>
+                </div>
+                <div class="input-row">
+                    <div class="input-group">
+                        <label for="current_visits">Current visits (optional, for conversion rate)</label>
+                        <input type="number" id="current_visits" placeholder="e.g., 50000 — leave blank to hide" step="1" min="0">
+                    </div>
+                    <div class="input-group">
+                        <label for="elasticity">Conv rate (optional)</label>
+                        <input type="number" id="elasticity" placeholder="0.82 default — response to spend (0.5–1)" step="0.01" min="0.5" max="1" value="0.82" title="How strongly leads respond to extra spend. 0.82 = typical; lower = more diminishing returns.">
+                    </div>
+                </div>
+                <button class="button" onclick="calculateIncremental()">Calculate incremental impact</button>
+                <div class="error-message" id="errorMessage"></div>
+            </div>
+
+            <div class="results-section" id="resultsSection">
+                <h2 style="margin-bottom: 20px; color: #495057;">Incremental impact results</h2>
+                <div id="periodSummary" class="efficiency-note" style="margin-bottom: 20px; background: #f0f4f0; border-left-color: #2d6a4f;"></div>
+                <div class="results-grid" id="resultsGrid"></div>
+                <div class="revenue-section" id="revenueSection">
+                    <h3>Revenue (per day)</h3>
+                    <div class="revenue-grid" id="revenueGrid"></div>
+                </div>
+                <div id="periodTotalsSection" class="revenue-section" style="background: #e8f4e8; border-left-color: #1b4332; display: none;">
+                    <h3>Over the full period</h3>
+                    <div class="revenue-grid" id="periodTotalsGrid"></div>
+                </div>
+                <div id="conversionSection" class="revenue-section" style="display: none;">
+                    <h3>Conversion rate</h3>
+                    <div class="revenue-grid" id="conversionGrid"></div>
+                </div>
+                <div class="efficiency-note" id="efficiencyNote"></div>
+                <table class="comparison-table">
+                    <thead>
+                        <tr>
+                            <th>Metric</th>
+                            <th>Current</th>
+                            <th>After adding funds</th>
+                            <th>Change</th>
+                        </tr>
+                    </thead>
+                    <tbody id="comparisonTableBody"></tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function formatCurrency(value) {
+            return new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(value);
+        }
+        function formatCurrencyNoDecimals(value) {
+            return new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', minimumFractionDigits: 0, maximumFractionDigits: 0 }).format(Math.round(value));
+        }
+        function formatNumber(value, decimals) {
+            return new Intl.NumberFormat('en-US', { minimumFractionDigits: decimals ?? 0, maximumFractionDigits: decimals ?? 0 }).format(value);
+        }
+        function formatPercent(value) {
+            const sign = value >= 0 ? '+' : '';
+            return `${sign}${value.toFixed(2)}%`;
+        }
+        function formatRoas(value) {
+            if (value == null || !isFinite(value)) return '—';
+            return value.toFixed(2) + 'x';
+        }
+
+        function getDaysLeftInMonth() {
+            const now = new Date();
+            const lastDay = new Date(now.getFullYear(), now.getMonth() + 1, 0);
+            const daysLeft = lastDay.getDate() - now.getDate() + 1;
+            return Math.max(1, daysLeft);
+        }
+
+        function getPeriodDays() {
+            const sel = document.getElementById('period_duration').value;
+            if (sel === 'rest_of_month') return getDaysLeftInMonth();
+            if (sel === 'custom') return parseInt(document.getElementById('custom_days').value, 10) || 1;
+            return parseInt(sel, 10) || 1;
+        }
+
+        function toggleCustomDays() {
+            const row = document.getElementById('custom_days_row');
+            row.style.display = document.getElementById('period_duration').value === 'custom' ? 'grid' : 'none';
+        }
+
+        function calculateIncremental() {
+            const currentBudget = parseFloat(document.getElementById('current_budget').value);
+            const currentCpa = parseFloat(document.getElementById('current_cpa').value);
+            const additionalFunds = parseFloat(document.getElementById('additional_funds').value);
+            const periodDays = getPeriodDays();
+            const revenuePerLead = parseFloat(document.getElementById('revenue_per_lead').value) || 0;
+            const elasticity = parseFloat(document.getElementById('elasticity').value) || 0.82;
+            const currentVisitsRaw = document.getElementById('current_visits').value.trim();
+            const currentVisits = currentVisitsRaw === '' ? null : parseFloat(currentVisitsRaw);
+
+            const errorMessage = document.getElementById('errorMessage');
+            errorMessage.classList.remove('show');
+            errorMessage.textContent = '';
+
+            if (!currentBudget || currentBudget <= 0) {
+                showError('Please enter a valid current daily budget greater than 0');
+                return;
+            }
+            if (!currentCpa || currentCpa <= 0) {
+                showError('Please enter a valid current CPA greater than 0');
+                return;
+            }
+            if (isNaN(additionalFunds) || additionalFunds < 0) {
+                showError('Please enter additional funds to add (0 or more)');
+                return;
+            }
+            if (periodDays < 1) {
+                showError('Period must be at least 1 day');
+                return;
+            }
+            if (revenuePerLead < 0) {
+                showError('Revenue per lead cannot be negative');
+                return;
+            }
+
+            const body = {
+                current_budget: currentBudget,
+                current_cpa: currentCpa,
+                additional_funds: additionalFunds,
+                period_days: periodDays,
+                elasticity: elasticity
+            };
+            if (currentVisits != null && currentVisits > 0) body.current_visits = currentVisits;
+
+            fetch('/api/forecast-incremental', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(body)
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.error) {
+                    showError(data.error);
+                    return;
+                }
+                displayResults(data);
+            })
+            .catch(err => {
+                showError('An error occurred while calculating. Please try again.');
+                console.error(err);
+            });
+        }
+
+        function showError(message) {
+            const el = document.getElementById('errorMessage');
+            el.textContent = message;
+            el.classList.add('show');
+        }
+
+        function displayResults(data) {
+            const resultsSection = document.getElementById('resultsSection');
+            const resultsGrid = document.getElementById('resultsGrid');
+            const comparisonTableBody = document.getElementById('comparisonTableBody');
+            const efficiencyNote = document.getElementById('efficiencyNote');
+            const revenueGrid = document.getElementById('revenueGrid');
+            const conversionSection = document.getElementById('conversionSection');
+            const conversionGrid = document.getElementById('conversionGrid');
+            const periodSummary = document.getElementById('periodSummary');
+            const periodTotalsSection = document.getElementById('periodTotalsSection');
+            const periodTotalsGrid = document.getElementById('periodTotalsGrid');
+
+            const periodDays = data.period_days || 1;
+            const dailyAdditional = data.daily_additional_funds != null ? data.daily_additional_funds : data.additional_funds;
+            const totalAdditional = data.total_additional_funds != null ? data.total_additional_funds : (data.additional_funds * periodDays);
+
+            const revenuePerLead = parseFloat(document.getElementById('revenue_per_lead').value) || 0;
+            const currentRevenue = data.current_leads * revenuePerLead;
+            const newRevenue = data.new_leads * revenuePerLead;
+            const incrementalRevenue = newRevenue - currentRevenue;
+            const revenueChangePercent = currentRevenue ? (incrementalRevenue / currentRevenue) * 100 : 0;
+
+            const totalIncrementalLeads = data.incremental_leads * periodDays;
+            const totalIncrementalRevenue = incrementalRevenue * periodDays;
+
+            const currentRoas = data.current_budget > 0 ? currentRevenue / data.current_budget : 0;
+            const newRoas = data.new_spend > 0 ? newRevenue / data.new_spend : 0;
+            const roasChange = currentRoas > 0 ? ((newRoas - currentRoas) / currentRoas) * 100 : 0;
+
+            const incrementalCpa = data.incremental_leads > 0 ? dailyAdditional / data.incremental_leads : null;
+            const incrementalRoas = dailyAdditional > 0 && incrementalRevenue > 0 ? incrementalRevenue / dailyAdditional : null;
+            const paybackDays = incrementalRevenue > 0 ? dailyAdditional / incrementalRevenue : null;
+            const icpaVsCurrent = (incrementalCpa != null && data.current_cpa > 0)
+                ? ((incrementalCpa - data.current_cpa) / data.current_cpa) * 100 : null;
+
+            resultsSection.classList.add('show');
+
+            periodSummary.innerHTML = periodDays > 1
+                ? `<strong>Period:</strong> ${formatCurrency(totalAdditional)} total over ${periodDays} days → <strong>${formatCurrency(dailyAdditional)} per day</strong> added to budget. All metrics below are <em>per day</em> unless stated.`
+                : `<strong>Same-day:</strong> ${formatCurrency(dailyAdditional)} additional spend in one day.`;
+
+            resultsGrid.innerHTML = `
+                <div class="metric-card current">
+                    <div class="metric-label">Current daily budget</div>
+                    <div class="metric-value">${formatCurrency(data.current_budget)}</div>
+                </div>
+                <div class="metric-card forecast">
+                    <div class="metric-label">New daily spend</div>
+                    <div class="metric-value">${formatCurrency(data.new_spend)}</div>
+                    <div class="metric-change positive">+${formatCurrency(dailyAdditional)}/day</div>
+                </div>
+                <div class="metric-card current">
+                    <div class="metric-label">Current leads (derived)</div>
+                    <div class="metric-value">${formatNumber(data.current_leads, 0)}</div>
+                </div>
+                <div class="metric-card forecast">
+                    <div class="metric-label">Incremental leads per day</div>
+                    <div class="metric-value">${formatNumber(data.incremental_leads, 0)}</div>
+                    <div class="metric-change positive">${formatPercent(data.lead_change_percent)}</div>
+                </div>
+                <div class="metric-card forecast">
+                    <div class="metric-label">New total leads per day</div>
+                    <div class="metric-value">${formatNumber(data.new_leads, 0)}</div>
+                </div>
+                <div class="metric-card change">
+                    <div class="metric-label">New CPA</div>
+                    <div class="metric-value">${formatCurrency(data.new_cpa)}</div>
+                    <div class="metric-change ${data.cpl_change_percent <= 0 ? 'positive' : 'negative'}">${formatPercent(data.cpl_change_percent)}</div>
+                </div>
+            `;
+
+            revenueGrid.innerHTML = `
+                <div class="revenue-item">
+                    <div class="label">Current daily revenue</div>
+                    <div class="value">${formatCurrencyNoDecimals(currentRevenue)}</div>
+                </div>
+                <div class="revenue-item">
+                    <div class="label">New daily revenue</div>
+                    <div class="value">${formatCurrencyNoDecimals(newRevenue)}</div>
+                </div>
+                <div class="revenue-item">
+                    <div class="label">Incremental revenue per day</div>
+                    <div class="value metric-change ${incrementalRevenue >= 0 ? 'positive' : 'negative'}">${formatCurrencyNoDecimals(incrementalRevenue)} (${formatPercent(revenueChangePercent)})</div>
+                </div>
+            `;
+
+            if (periodDays > 1) {
+                periodTotalsSection.style.display = 'block';
+                periodTotalsGrid.innerHTML = `
+                    <div class="revenue-item">
+                        <div class="label">Total additional spend</div>
+                        <div class="value">${formatCurrencyNoDecimals(totalAdditional)}</div>
+                    </div>
+                    <div class="revenue-item">
+                        <div class="label">Total incremental leads (${periodDays} days)</div>
+                        <div class="value">${formatNumber(totalIncrementalLeads, 0)}</div>
+                    </div>
+                    <div class="revenue-item">
+                        <div class="label">Total incremental revenue (${periodDays} days)</div>
+                        <div class="value metric-change ${totalIncrementalRevenue >= 0 ? 'positive' : 'negative'}">${formatCurrencyNoDecimals(totalIncrementalRevenue)}</div>
+                    </div>
+                `;
+            } else {
+                periodTotalsSection.style.display = 'none';
+            }
+
+            if (data.current_conversion_rate != null) {
+                conversionSection.style.display = 'block';
+                conversionGrid.innerHTML = `
+                    <div class="revenue-item">
+                        <div class="label">Current conversion rate</div>
+                        <div class="value">${data.current_conversion_rate.toFixed(2)}%</div>
+                    </div>
+                    <div class="revenue-item">
+                        <div class="label">New conversion rate</div>
+                        <div class="value">${data.new_conversion_rate.toFixed(2)}%</div>
+                    </div>
+                `;
+            } else {
+                conversionSection.style.display = 'none';
+            }
+
+            comparisonTableBody.innerHTML = `
+                <tr>
+                    <td><strong>Daily spend</strong></td>
+                    <td>${formatCurrency(data.current_budget)}</td>
+                    <td>${formatCurrency(data.new_spend)}</td>
+                    <td class="metric-change positive">+${formatCurrency(dailyAdditional)}/day</td>
+                </tr>
+                <tr>
+                    <td><strong>Daily leads</strong></td>
+                    <td>${formatNumber(data.current_leads, 0)}</td>
+                    <td>${formatNumber(data.new_leads, 0)}</td>
+                    <td class="metric-change positive">+${formatNumber(data.incremental_leads, 0)}/day (${formatPercent(data.lead_change_percent)})</td>
+                </tr>
+                <tr>
+                    <td><strong>CPA</strong></td>
+                    <td>${formatCurrency(data.current_cpa)}</td>
+                    <td>${formatCurrency(data.new_cpa)}</td>
+                    <td class="metric-change ${data.cpl_change_percent <= 0 ? 'positive' : 'negative'}">${formatPercent(data.cpl_change_percent)}</td>
+                </tr>
+                <tr>
+                    <td><strong>Daily revenue</strong></td>
+                    <td>${formatCurrencyNoDecimals(currentRevenue)}</td>
+                    <td>${formatCurrencyNoDecimals(newRevenue)}</td>
+                    <td class="metric-change ${incrementalRevenue >= 0 ? 'positive' : 'negative'}">${formatCurrencyNoDecimals(incrementalRevenue)}/day (${formatPercent(revenueChangePercent)})</td>
+                </tr>
+                <tr>
+                    <td><strong>ROAS</strong></td>
+                    <td>${formatRoas(currentRoas)}</td>
+                    <td>${formatRoas(newRoas)}</td>
+                    <td class="metric-change ${roasChange >= 0 ? 'positive' : 'negative'}">${formatPercent(roasChange)}</td>
+                </tr>
+                <tr>
+                    <td><strong>Incremental CPA (iCPA)</strong></td>
+                    <td>—</td>
+                    <td>${incrementalCpa != null ? formatCurrency(incrementalCpa) : '—'}</td>
+                    <td class="metric-change ${icpaVsCurrent != null ? (icpaVsCurrent <= 0 ? 'positive' : 'negative') : ''}">${icpaVsCurrent != null ? 'vs current: ' + formatPercent(icpaVsCurrent) : '—'}</td>
+                </tr>
+                <tr>
+                    <td><strong>Incremental ROAS (iROAS)</strong></td>
+                    <td>—</td>
+                    <td>${incrementalRoas != null ? formatRoas(incrementalRoas) : '—'}</td>
+                    <td>—</td>
+                </tr>
+                <tr>
+                    <td><strong>Payback (days)</strong></td>
+                    <td>—</td>
+                    <td>${paybackDays != null ? paybackDays.toFixed(1) + ' days' : '—'}</td>
+                    <td style="font-size: 0.85em; color: #6c757d;">days of incremental revenue to cover extra spend/day</td>
+                </tr>
+            `;
+
+            efficiencyNote.innerHTML = periodDays > 1
+                ? `<strong>💡 Model (conv rate ${data.elasticity}):</strong> Spending ${formatCurrency(totalAdditional)} over ${periodDays} days (${formatCurrency(dailyAdditional)}/day) yields ${formatNumber(data.incremental_leads, 0)} incremental leads per day (${formatNumber(totalIncrementalLeads, 0)} total over the period). ${data.efficiency_factor}% efficiency vs. spend change.`
+                : `<strong>💡 Model (conv rate ${data.elasticity}):</strong> Adding ${formatCurrency(dailyAdditional)} to your daily budget yields ${formatNumber(data.incremental_leads, 0)} incremental leads (${data.efficiency_factor}% efficiency vs. spend change).`;
+        }
+
+        document.addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') calculateIncremental();
+        });
+    </script>
+</body>
+</html>
